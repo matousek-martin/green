@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "green"
+version = "0.1.0"
+description = "Carbon registry API wrapper in Python"
+authors = ["Martin Matousek <martin.matousek@outlook.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pydantic = "^1.10.4"
+requests = "^2.28.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.12.0"
+isort = "^5.11.4"
+mypy = "^0.991"
+autoflake = "^2.0.0"
+flake8 = "^6.0.0"
+pytest = "^7.2.0"
+pytest-cov = "^4.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
