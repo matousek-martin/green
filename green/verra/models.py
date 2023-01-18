@@ -6,27 +6,29 @@ from green.verra.endpoints import API_PATH
 class Project:
     def __init__(self, verra: "Verra", data: dict[str, Any]):
         self._verra = verra
-        self.program = data['program']
-        self.resourceIdentifier = data['resourceIdentifier']
-        self.resourceName = data['resourceName']
-        self.proponent = data['proponent']
-        self.operator = data['operator']
-        self.designee = data['designee']
-        self.protocolCategories = data['protocolCategories']
-        self.protocolSubCategories = data['protocolSubCategories']
-        self.protocols = data['protocols']
-        self.resourceStatus = data['resourceStatus']
-        self.country = data['country']
-        self.estAnnualEmissionReductions = data['estAnnualEmissionReductions']
-        self.region = data['region']
-        self.projectRegistrationDate = data['projectRegistrationDate']
-        self.version = data['version']
-        self.compatibleProgramScenarioTypeName = data['compatibleProgramScenarioTypeName']
-        self.inputTypes = data['inputTypes']
-        self.programObjectives = data['programObjectives']
-        self.creditingPeriodStartDate = data['creditingPeriodStartDate']
-        self.creditingPeriodEndDate = data['creditingPeriodEndDate']
-        self.createDate = data['createDate']
+        self.program = data["program"]
+        self.resourceIdentifier = data["resourceIdentifier"]
+        self.resourceName = data["resourceName"]
+        self.proponent = data["proponent"]
+        self.operator = data["operator"]
+        self.designee = data["designee"]
+        self.protocolCategories = data["protocolCategories"]
+        self.protocolSubCategories = data["protocolSubCategories"]
+        self.protocols = data["protocols"]
+        self.resourceStatus = data["resourceStatus"]
+        self.country = data["country"]
+        self.estAnnualEmissionReductions = data["estAnnualEmissionReductions"]
+        self.region = data["region"]
+        self.projectRegistrationDate = data["projectRegistrationDate"]
+        self.version = data["version"]
+        self.compatibleProgramScenarioTypeName = data[
+            "compatibleProgramScenarioTypeName"
+        ]
+        self.inputTypes = data["inputTypes"]
+        self.programObjectives = data["programObjectives"]
+        self.creditingPeriodStartDate = data["creditingPeriodStartDate"]
+        self.creditingPeriodEndDate = data["creditingPeriodEndDate"]
+        self.createDate = data["createDate"]
 
     def summary(self) -> list:
         return self._verra.get(
@@ -39,9 +41,7 @@ class Program:
         self._verra = verra
         self.name = name
 
-    def parameters(
-        self, params: Optional[dict[str, str]]
-    ) -> dict[str, Any]:
+    def parameters(self, params: Optional[dict[str, str]]) -> dict[str, Any]:
         params = {
             "program": self.name,
             "types": [
@@ -51,8 +51,8 @@ class Program:
                 "region",
                 "protocol",
                 "creditingPeriodType",  # VCS
-                "inputType",            # PWRP
-                "programObjective",     # CA_OPR
+                "inputType",  # PWRP
+                "programObjective",  # CA_OPR
             ],
             "inUseOnly": True,
         }
@@ -74,7 +74,7 @@ class Program:
         body["program"] = self.name
 
         res = self._verra.post(url=API_PATH["search"], params=params, body=body)
-        return [Project(self._verra, data) for data in res['value']]
+        return [Project(self._verra, data) for data in res["value"]]
 
     def summary(self) -> list:
         return self._verra.get(
