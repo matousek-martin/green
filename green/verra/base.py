@@ -1,90 +1,54 @@
-from abc import ABC
-from typing import Any, Optional
+from typing import Any, Optional, Type
 from urllib.parse import urlencode
 
-from green.requestor import Requestor
-from green.verra.endpoints import ENDPOINTS
+import requests
+from requests.sessions import Session
+
+from green.verra.models import Program
 
 
-class ProgramBase(ABC):
-    def __init__(self):
-        self.name = None
-        self.section = None
-        self.http = Requestor(url="https://registry.verra.org/uiapi")
-
-    def get_search_parameters(
-        self, types: Optional[list[str]] = None, in_use_only: bool = True
-    ) -> dict[str, Any]:
-        params = {
-            "program": self.name,
-            "types": types
-            or [
-                "protocolCategory",
-                "resourceStatus",
-                "country",
-                "region",
-                "protocol",
-                "creditingPeriodType",  # VCS
-                "inputType",  # PWRP
-                "programObjective",  # CA_OPR
-            ],
-            "inUseOnly": in_use_only,
-        }
-        return self.http.get(endpoint=ENDPOINTS["parameters"], params=params)
-
-    def search(
+class Verra:
+    def __init__(
         self,
-        body: Optional[dict[str, str]] = None,
-        result_size: int = 2**31 - 1,
-        count: bool = True,
-        skip: Optional[int] = None,
-        top: Optional[int] = None,
-    ) -> dict:
-        query_parameters = {
-            "maxResults": result_size,
-            "$count": count,
-            "$skip": skip or 0,
-            "$top": top or result_size,
-        }
-        params = urlencode(query_parameters, safe="$")
-        if body is None:
-            body = {}
-        body["program"] = self.name
-        return self.http.post(endpoint=ENDPOINTS["search"], params=params, body=body)
+        url: str = "https://registry.verra.org/uiapi",
+        session: Optional[Type[Session]] = None,
+    ):
+        self.url = url
+        self.session = session or requests.Session()
+        self.vcs = Program(self, "VCS")
+        self.pwrp = Program(self, "PWRP")
+        self.ccb = Program(self, "CCB")
+        self.sdvista = Program(self, "SDVISTA")
+        self.ca_opr = Program(self, "CA_OPR")
 
-    def statistics(self) -> list:
-        programmes = self.http.get(endpoint=ENDPOINTS["program"])
-        for program in programmes:
-            if program.get("code") == self.name:
-                return program.get("statistics")
-        return []
+    def _http(
+        self,
+        method: str,
+        url: str,
+        params: Optional[dict[Any, Any] | str] = None,
+        body: Optional[dict[Any, Any]] = None,
+    ) -> dict | list:
+        url = self.url + url
+        response = self.session.request(  # type: ignore[call-arg]
+            url=url, method=method, params=params, json=body
+        )
+        if 299 >= response.status_code >= 200:
+            return response.json()
+        return {}
 
+    def get(
+        self,
+        url: str,
+        params: Optional[dict[Any, Any] | str] = None,
+    ):
+        return self._http(method="GET", url=url, params=params)
 
-class VerifiedCarbonStandard(ProgramBase):
-    def __init__(self):
-        super().__init__()
-        self.name = "VCS"
-
-
-class PlasticWasteReductionProgram(ProgramBase):
-    def __init__(self):
-        super().__init__()
-        self.name = "PWRP"
-
-
-class ClimateCommunityBiodiversityStandards(ProgramBase):
-    def __init__(self):
-        super().__init__()
-        self.name = "CCB"
-
-
-class SustainableDevelopmentVerifiedImpactStandard(ProgramBase):
-    def __init__(self):
-        super().__init__()
-        self.name = "SDVISTA"
-
-
-class CaliforniaOffsetProjectRegistry(ProgramBase):
-    def __init__(self):
-        super().__init__()
-        self.name = "CA_OPR"
+    def post(
+        self,
+        url: str,
+        params: Optional[dict[Any, Any] | str] = None,
+        body: Optional[dict[Any, Any]] = None,
+    ):
+        if isinstance(params, dict):
+            params = urlencode(params, safe="$")
+        return self._http(method="POST", url=url, params=params, body=body)
