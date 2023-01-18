@@ -6,29 +6,9 @@ from green.verra.endpoints import API_PATH
 class Project:
     def __init__(self, verra: "Verra", data: dict[str, Any]):
         self._verra = verra
-        self.program = data["program"]
-        self.resourceIdentifier = data["resourceIdentifier"]
-        self.resourceName = data["resourceName"]
-        self.proponent = data["proponent"]
-        self.operator = data["operator"]
-        self.designee = data["designee"]
-        self.protocolCategories = data["protocolCategories"]
-        self.protocolSubCategories = data["protocolSubCategories"]
-        self.protocols = data["protocols"]
-        self.resourceStatus = data["resourceStatus"]
-        self.country = data["country"]
-        self.estAnnualEmissionReductions = data["estAnnualEmissionReductions"]
-        self.region = data["region"]
-        self.projectRegistrationDate = data["projectRegistrationDate"]
-        self.version = data["version"]
-        self.compatibleProgramScenarioTypeName = data[
-            "compatibleProgramScenarioTypeName"
-        ]
-        self.inputTypes = data["inputTypes"]
-        self.programObjectives = data["programObjectives"]
-        self.creditingPeriodStartDate = data["creditingPeriodStartDate"]
-        self.creditingPeriodEndDate = data["creditingPeriodEndDate"]
-        self.createDate = data["createDate"]
+        self.resourceIdentifier = None
+        for attr, val in data.items():
+            setattr(self, attr, val)
 
     def summary(self) -> list:
         return self._verra.get(
@@ -41,18 +21,19 @@ class Program:
         self._verra = verra
         self.name = name
 
-    def parameters(self, params: Optional[dict[str, str]]) -> dict[str, Any]:
+    def parameters(self, types: Optional[list[str]]) -> dict[str, Any]:
         params = {
             "program": self.name,
-            "types": [
+            "types": types
+            or [
                 "protocolCategory",
                 "resourceStatus",
                 "country",
                 "region",
                 "protocol",
-                "creditingPeriodType",  # VCS
-                "inputType",  # PWRP
-                "programObjective",  # CA_OPR
+                "creditingPeriodType",
+                "inputType",
+                "programObjective",
             ],
             "inUseOnly": True,
         }
@@ -61,17 +42,17 @@ class Program:
     def projects(
         self,
         body: Optional[dict[str, str]] = None,
-        params: Optional[dict[str, str]] = None,
+        params: Optional[dict[str, Any]] = None,
     ) -> list[Project]:
-        params = {
-            "maxResults": 2**31 - 1,
-            "$top": 2**31 - 1,
-            "$count": True,
-            "$skip": 0,
-        }
+        if params is None:
+            params = {
+                "maxResults": 2**31 - 1,
+                "$top": 2**31 - 1,
+                "$count": True,
+                "$skip": 0,
+            }
         if body is None:
-            body = {}
-        body["program"] = self.name
+            body = {"program": self.name}
 
         res = self._verra.post(url=API_PATH["search"], params=params, body=body)
         return [Project(self._verra, data) for data in res["value"]]
